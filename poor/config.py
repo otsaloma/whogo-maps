@@ -31,7 +31,7 @@ DEFAULTS = {
     "basemap": "mapbox_streets_gl",
     "basemap_filter": "",
     "center": [0.0, 0.0],
-    "geocoder": "opencage",
+    "geocoder": "mapzen",
     "guide": "foursquare",
     # "always", "navigating" or "never".
     "keep_alive": "navigating",
@@ -43,7 +43,7 @@ DEFAULTS = {
     "units": "metric",
     # "male" or "female"
     "voice_gender": "male",
-    "voice_navigation": True,
+    "voice_navigation": False,
     "zoom": 3,
 }
 
