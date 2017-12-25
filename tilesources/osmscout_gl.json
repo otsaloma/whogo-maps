@@ -1,6 +1,6 @@
 {
     "attribution": "Data © OpenStreetMap contributors",
-    "attributionFull": "<a href=https://github.com/rinigus/osmscout-server>OSM Scout Server</a><br><a href=http://www.openstreetmap.org/copyright>© OpenStreetMap</a><br>Tile schema based on <a href=http://openmaptiles.org>OpenMapTiles</a>",
+    "attributionFull": "<a href=https://github.com/rinigus/osmscout-server>OSM Scout Server</a><br><a href=http://www.openstreetmap.org/copyright>© OpenStreetMap</a>",
     "format": "mapbox",
     "name": "OSM Scout",
     "_source": "OSM Scout offline server",
