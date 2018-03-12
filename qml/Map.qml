@@ -156,7 +156,7 @@ MapboxMap {
                 "passive": maneuvers[i].passive || false,
                 "verbalAlert": maneuvers[i].verbal_alert || "",
                 "verbalPost": maneuvers[i].verbal_post || "",
-                "verbalPre": maneuvers[i].verbal_pre || ""
+                "verbalPre": maneuvers[i].verbal_pre || "",
             });
         }
         py.call("poor.app.narrative.set_maneuvers", [maneuvers], null);
@@ -171,7 +171,7 @@ MapboxMap {
                 "coordinate": QtPositioning.coordinate(pois[i].y, pois[i].x),
                 "link": pois[i].link || "",
                 "text": pois[i].text || "",
-                "title": pois[i].title || ""
+                "title": pois[i].title || "",
             });
         }
         map.updatePois();
@@ -261,12 +261,14 @@ MapboxMap {
         map.setPaintProperty(map.layerRoute, "line-width", 22 / map.pixelRatio);
         // Configure layer for active maneuver markers.
         map.setPaintProperty(map.layerManeuversActive, "circle-color", "white");
+        map.setPaintProperty(map.layerManeuversActive, "circle-pitch-alignment", "map");
         map.setPaintProperty(map.layerManeuversActive, "circle-radius", 11 / map.pixelRatio);
         map.setPaintProperty(map.layerManeuversActive, "circle-stroke-color", "#0540ff");
         map.setPaintProperty(map.layerManeuversActive, "circle-stroke-opacity", 0.5);
         map.setPaintProperty(map.layerManeuversActive, "circle-stroke-width", 8 / map.pixelRatio);
         // Configure layer for passive maneuver markers.
         map.setPaintProperty(map.layerManeuversPassive, "circle-color", "white");
+        map.setPaintProperty(map.layerManeuversPassive, "circle-pitch-alignment", "map");
         map.setPaintProperty(map.layerManeuversPassive, "circle-radius", 5 / map.pixelRatio);
         map.setPaintProperty(map.layerManeuversPassive, "circle-stroke-color", "#0540ff");
         map.setPaintProperty(map.layerManeuversPassive, "circle-stroke-opacity", 0.5);
@@ -431,7 +433,7 @@ MapboxMap {
         });
     }
 
-    function popPoiBubble(poi) {
+    function showPoiBubble(poi) {
         // Show a detail bubble for the given POI.
         if (poi.bubble) return;
         var component = Qt.createComponent("PoiBubble.qml");
@@ -440,7 +442,7 @@ MapboxMap {
             "link": poi.link,
             "text": poi.text,
             "title": poi.title,
-            "trackerId": "poi-%1".arg(++map.counter)
+            "trackerId": "poi-%1".arg(++map.counter),
         });
         map.trackLocation(bubble.trackerId, poi.coordinate);
         poi.bubble = bubble;
@@ -528,7 +530,7 @@ MapboxMap {
 
     function togglePoiBubble(poi) {
         // Show or hide a detail bubble for the given POI.
-        poi.bubble ? map.hidePoiBubble(poi) : map.popPoiBubble(poi);
+        poi.bubble ? map.hidePoiBubble(poi) : map.showPoiBubble(poi);
     }
 
     function updateManeuvers() {
