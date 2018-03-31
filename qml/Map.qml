@@ -348,7 +348,7 @@ MapboxMap {
     function initLayers() {
         // Initialize layers for POI markers, route polyline and maneuver markers.
         map.addLayer(map.layers.pois, {"type": "circle", "source": map.sources.pois});
-        map.addLayer(map.layers.route, {"type": "line", "source": map.sources.route});
+        map.addLayer(map.layers.route, {"type": "line", "source": map.sources.route}, map.firstLabelLayer);
         map.addLayer(map.layers.maneuvers, {
             "type": "circle",
             "source": map.sources.maneuvers,
@@ -450,6 +450,7 @@ MapboxMap {
             (map.styleUrl  = py.evaluate("poor.app.basemap.style_url")) :
             (map.styleJson = py.evaluate("poor.app.basemap.style_json"));
         app.attributionButton.logo = py.evaluate("poor.app.basemap.logo");
+        map.initLayers();
     }
 
     function setCenter(x, y) {
