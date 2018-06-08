@@ -24,7 +24,6 @@ import "../qml/js/util.js" as Util
 Dialog {
     id: dialog
     allowedOrientations: app.defaultAllowedOrientations
-    canAccept: dialog.query.length > 0
 
     property var    history: []
     property string query: ""
