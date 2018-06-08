@@ -47,6 +47,7 @@ def nearby(query, near, radius, params):
     query = urllib.parse.quote_plus(query)
     limit = params.get("limit", 50)
     name = params.get("name", "")
+    name = urllib.parse.quote_plus(name)
     if isinstance(near, (list, tuple)):
         x, y = near[0], near[1]
         url = URL_XY.format(**locals())
