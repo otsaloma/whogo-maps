@@ -36,6 +36,7 @@ Column {
 
         Component.onCompleted: {
             page.params.name = ""
+            page.types = py.call_sync("poor.app.guide._provider.types")
         }
     }
 }
