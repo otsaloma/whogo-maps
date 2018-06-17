@@ -52,13 +52,15 @@ Dialog {
 
             ContextMenu {
                 id: contextMenu
-                enabled: dialog.types.length > 0
                 MenuItem {
                     text: app.tr("Remove")
+                    enabled: dialog.types.length === 0
                     onClicked: {
-                        py.call_sync("poor.app.history.remove_place_type", [model.type]);
-                        dialog.history = py.evaluate("poor.app.history.place_types");
-                        listView.model.remove(index);
+                        if (dialog.types.length === 0) {
+                            py.call_sync("poor.app.history.remove_place_type", [model.type]);
+                            dialog.history = py.evaluate("poor.app.history.place_types");
+                            listView.model.remove(index);
+                        }
                     }
                 }
             }
