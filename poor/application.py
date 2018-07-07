@@ -33,6 +33,7 @@ class Application:
         self.geocoder = None
         self.guide = None
         self.history = poor.HistoryManager()
+        self.matcher = poor.Matcher()
         self.narrative = poor.Narrative()
         self.router = None
         self.set_basemap(poor.conf.basemap)
