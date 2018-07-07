@@ -59,8 +59,8 @@ Item {
                 gps_real.position.coordinate.longitude;
             gps_real.timePosition = Date.now();
             var threshold = gps_real.position.horizontalAccuracy || 15;
-            if (threshold < 0 || threshold > 40) return;
-            
+            if (threshold < 0 || threshold > 100) return;
+
             // Map matching
             py.call("poor.app.matcher.match", [gps_real.position.coordinate.longitude,
                                                gps_real.position.coordinate.latitude,
@@ -77,7 +77,9 @@ Item {
                                                        gps.direction = position.direction;
                                                    }
                                                });
-            
+
+            // original threshold
+            if (threshold < 0 || threshold > 40) return;
             var coord = gps_real.position.coordinate;
             if (gps_real.coordHistory.length === 0)
                 gps_real.coordHistory.push(QtPositioning.coordinate(
