@@ -56,7 +56,7 @@ class Matcher:
                     shape_match = "map_snap")
 
         result = poor.http.get_json(
-            'http://localhost:8554/trace_attributes?json=' +
+            'http://localhost:8553/v2/trace_attributes?json=' +
             urllib.parse.quote(json.dumps(task)))
 
         mpoints = result.get("matched_points", [])
