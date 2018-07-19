@@ -31,7 +31,12 @@ cache = {}
 def autocomplete(query, x, y, params):
     """Return a list of autocomplete dictionaries matching `query`."""
     if len(query) < 3: return []
-    return geocode(query, params)
+    key = "autocomplete:{}".format(query)
+    with poor.util.silent(KeyError):
+        return copy.deepcopy(cache[key])
+    results = geocode(query, params)
+    cache[key] = copy.deepcopy(results)
+    return results
 
 def geocode(query, params):
     """Return a list of dictionaries of places matching `query`."""
