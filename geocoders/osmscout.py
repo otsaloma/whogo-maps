@@ -43,7 +43,7 @@ def geocode(query, params):
     results = poor.http.get_json(url)
     results = list(map(poor.AttrDict, results))
     results = [dict(
-        label=result.title,
+        label=parse_label(result),
         title=result.title,
         description=parse_description(result),
         x=float(result.lng),
@@ -64,3 +64,10 @@ def parse_description(result):
     with poor.util.silent(Exception):
         items.append(result.admin_region)
     return ", ".join(items) or "–"
+
+def parse_label(result):
+    """Parse description from geocoding result."""
+    label = result.title
+    with poor.util.silent(Exception):
+        label = result.admin_region
+    return label
