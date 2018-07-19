@@ -31,6 +31,7 @@ Dialog {
     property var    autocompletions: []
     property var    history: []
     property string query: ""
+    property var    types: []
 
     SilicaListView {
         id: listView
@@ -55,10 +56,13 @@ Dialog {
                 id: contextMenu
                 MenuItem {
                     text: app.tr("Remove")
+                    enabled: dialog.types.length === 0
                     onClicked: {
-                        py.call_sync("poor.app.history.remove_place_type", [model.type]);
-                        dialog.history = py.evaluate("poor.app.history.place_types");
-                        listView.model.remove(index);
+                        if (dialog.types.length === 0) {
+                            py.call_sync("poor.app.history.remove_place_type", [model.type]);
+                            dialog.history = py.evaluate("poor.app.history.place_types");
+                            listView.model.remove(index);
+                        }
                     }
                 }
             }
@@ -166,7 +170,11 @@ Dialog {
 
     function loadHistory() {
         // Load search history and preallocate list items.
-        dialog.history = py.evaluate("poor.app.history.place_types");
+        if (dialog.types.length > 0) {
+            dialog.history = dialog.types;
+        } else {
+            dialog.history = py.evaluate("poor.app.history.place_types");
+        }
         while (listView.model.count < 100)
             listView.model.append({"type": "",
                                    "text": "",

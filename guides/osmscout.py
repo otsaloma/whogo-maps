@@ -82,3 +82,6 @@ def parse_description(result):
     with poor.util.silent(Exception):
         items.append(result.admin_region)
     return ", ".join(items) or "–"
+
+def types():
+    return poor.http.get_json("http://localhost:8553/v1/poi_types")

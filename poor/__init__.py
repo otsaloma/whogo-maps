@@ -51,6 +51,7 @@ from poor.history import HistoryManager
 from poor.router import Router
 from poor.voice import VoiceGenerator
 from poor.narrative import Narrative
+from poor.matcher import Matcher
 from poor.application import Application
 
 assert Application
