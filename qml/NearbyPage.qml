@@ -31,6 +31,7 @@ Page {
     property string nearText: ""
     property string query: ""
     property var    params: {}
+    property var    types: []
     property real   radius: 1000
 
     // Offer a different selection of radii depending on the user's
@@ -67,6 +68,7 @@ Page {
                 onClicked: {
                     var dialog = app.pageStack.push("GuidePage.qml");
                     dialog.accepted.connect(function() {
+                        page.types = []
                         usingButton.value = py.evaluate("poor.app.guide.name");
                         column.addSetttings();
                     });
@@ -114,7 +116,7 @@ Page {
                 // Avoid putting label and value on different lines.
                 width: 3 * parent.width
                 onClicked: {
-                    var dialog = app.pageStack.push("PlaceTypePage.qml");
+                    var dialog = app.pageStack.push("PlaceTypePage.qml", { 'types': page.types } );
                     dialog.accepted.connect(function() {
                         page.query = dialog.query;
                     });
@@ -174,7 +176,9 @@ Page {
     }
 
     onQueryChanged: {
-        py.call_sync("poor.app.history.add_place_type", [page.query]);
+        if (page.types.length === 0) {
+            py.call_sync("poor.app.history.add_place_type", [page.query]);
+        }
     }
 
     onStatusChanged: {
