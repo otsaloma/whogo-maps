@@ -38,4 +38,48 @@ Column {
             page.params.name = ""
         }
     }
+
+    TextSwitch {
+        id: routeSwitch
+        anchors.left: parent.left
+        anchors.right: parent.right
+        checked: page.params.alongRoute!==undefined && page.params.alongRoute
+        text: app.tr("Search along the route")
+        visible: map.hasRoute
+
+        function update() {
+            if (!map.hasRoute) {
+                routeSwitch.checked = false;
+            }
+            if (routeSwitch.checked) {
+                page.params.alongRoute = true;
+                page.params.route = { "route_lng": map.route.x, "route_lat": map.route.y };
+            } else {
+                page.params.alongRoute = false;
+            }
+        }
+
+        onCheckedChanged: routeSwitch.update()
+        Component.onCompleted: routeSwitch.update()
+    }
+
+    TextSwitch {
+        id: fromRefSwitch
+        anchors.left: parent.left
+        anchors.right: parent.right
+        checked: page.params.fromReference!==undefined && page.params.fromReference
+        description: app.tr("When set, the search along the route is performed starting from the point specified by 'Near' on this page") 
+        text: app.tr("Search starting from the reference point")
+        visible: map.hasRoute && routeSwitch.checked
+
+        function update() {
+            page.params.fromReference = fromRefSwitch.checked;
+        }
+
+        onCheckedChanged: fromRefSwitch.update()
+        Component.onCompleted: {
+            fromRefSwitch.checked = true;
+            fromRefSwitch.update();
+        }
+    }
 }
