@@ -51,6 +51,14 @@ PositionSourceMapMatched {
         if (gps.active) gps.timeActivate = Date.now();
     }
 
+    onDirectionValidChanged: {
+        // Clear direction if we switchid to map matched directions
+        if (!directionValid) return;
+        gps.coordHistory = [];
+        gps.directionCalculated = false;
+        gps.directionHistory = [];
+    }
+
     onPositionChanged: {
         // proceed only if map matching does not provide direction
         if (directionValid) return;
@@ -83,7 +91,7 @@ PositionSourceMapMatched {
                 gps.timeDirection = Date.now();
                 gps.directionCalculated = true;
             }
-        } else if (gps.direction && Date.now() - gps.timeDirection > 300000) {
+        } else if (gps.directionCalculated && Date.now() - gps.timeDirection > 300000) {
             // Clear direction if we have not seen any valid updates in a while.
             gps.coordHistory = [];
             gps.directionCalculated = false;
@@ -91,11 +99,4 @@ PositionSourceMapMatched {
         }
     }
 
-    onDirectionValidChanged: {
-        // Clear direction if we switchid to map matched directions
-        if (!directionValid) return;
-        gps.coordHistory = [];
-        gps.directionCalculated = false;
-        gps.directionHistory = [];
-    }
 }
