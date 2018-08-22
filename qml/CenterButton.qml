@@ -1,6 +1,6 @@
 /* -*- coding: utf-8-unix -*-
  *
- * Copyright (C) 2018 Osmo Salomaa
+ * Copyright (C) 2018 Osmo Salomaa, 2018 Rinigus
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,35 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 
 IconButton {
+    id: button
     anchors.right: parent.right
-    anchors.top: navigationBlock.bottom
+    anchors.top: navigationSign.bottom
     height: icon.height
     icon.height: icon.sourceSize.height
     icon.smooth: false
     icon.source: app.getIcon("icons/center")
     icon.width: icon.sourceSize.width
+    states: [
+        State {
+            when: app.navigationActive && app.portrait
+            AnchorChanges {
+                target: button
+                anchors.right: undefined
+                anchors.horizontalCenter: app.northArrow.horizontalCenter
+            }
+        },
+        State {
+            when: app.navigationActive && !app.portrait
+            AnchorChanges {
+                target: button
+                anchors.right: app.northArrow.left
+                anchors.top: undefined
+                anchors.verticalCenter: app.northArrow.verticalCenter
+            }
+        }
+    ]
     width: icon.width
     z: 500
+
     onClicked: map.centerOnPosition();
 }

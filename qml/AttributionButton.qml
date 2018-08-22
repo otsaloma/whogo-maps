@@ -28,11 +28,28 @@ IconButton {
     icon.smooth: false
     icon.source: app.getIcon("icons/attribution/default")
     icon.width: icon.sourceSize.width
+    states: [
+        State {
+            when: !app.portrait && navigationBlockLandscapeLeftShield.height > 0
+            AnchorChanges {
+                target: attributionButton
+                anchors.top: navigationBlockLandscapeLeftShield.bottom
+            }
+        }
+    ]
     width: icon.width
     z: 500
+
     property string logo: ""
+
     onClicked: app.showMenu("AttributionPage.qml");
     onLogoChanged: attributionButton.icon.source = logo ?
         app.getIcon("icons/attribution/%1".arg(logo)) : "";
+
+    Connections {
+        target: app.styler
+        onIconVariantChanged: attributionButton.icon.source = attributionButton.logo ?
+                                  app.getIcon("icons/attribution/%1".arg(attributionButton.logo)) : "";
+    }
 
 }

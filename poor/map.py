@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2018 Osmo Salomaa
+# Copyright (C) 2018 Osmo Salomaa, 2018 Rinigus
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,6 +49,7 @@ class Map:
         self.logo = values.get("logo", "default")
         self.name = values["name"]
         self.style_dict = values.get("style_json", {})
+        self.style_gui = values.get("style_gui", {})
         self.style_url = values.get("style_url", "")
         self.tile_size = values.get("tile_size", 256)
         self.tile_url = values.get("tile_url", "")

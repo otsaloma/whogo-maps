@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Osmo Salomaa
+# Copyright (C) 2014 Osmo Salomaa, 2018 Rinigus
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,10 +34,20 @@ DEFAULTS = {
     "guide": "foursquare",
     # "always", "navigating" or "never".
     "keep_alive": "navigating",
+    # "none", "car", "bicycle", "foot"
+    "map_matching_when_idle": "none",
+    "map_matching_when_navigating": False,
     "map_scale": 1.0,
+    "map_scale_navigation_bicycle": 2.0,
+    "map_scale_navigation_car": 2.0,
+    "map_scale_navigation_foot": 1.0,
+    "map_scale_navigation_transit": 1.0,
     "reroute": True,
     "router": "mapquest_open",
     "show_narrative": True,
+    "show_navigation_sign": True,
+    # "always", "exceeding", "never"
+    "show_speed_limit": "always",
     "tilt_when_navigating": True,
     # "metric", "american" or "british".
     "units": "metric",
@@ -105,7 +115,7 @@ class ConfigurationStore(poor.AttrDict):
 
     def read(self, path=None):
         """Read values of options from JSON file at `path`."""
-        path = path or os.path.join(poor.CONFIG_HOME_DIR, "whogo-maps.json")
+        path = path or os.path.join(poor.CONFIG_HOME_DIR, "pure-maps.json")
         if not os.path.isfile(path): return
         values = {}
         with poor.util.silent(Exception, tb=True):
@@ -182,7 +192,7 @@ class ConfigurationStore(poor.AttrDict):
 
     def write(self, path=None):
         """Write values of options to JSON file at `path`."""
-        path = path or os.path.join(poor.CONFIG_HOME_DIR, "whogo-maps.json")
+        path = path or os.path.join(poor.CONFIG_HOME_DIR, "pure-maps.json")
         out = copy.deepcopy(self)
         # Make sure no obsolete top-level options remain.
         names = list(DEFAULTS.keys()) + ["guides", "routers"]

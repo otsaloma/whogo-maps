@@ -1,6 +1,6 @@
 /* -*- coding: utf-8-unix -*-
  *
- * Copyright (C) 2015 Osmo Salomaa
+ * Copyright (C) 2015 Osmo Salomaa, 2018 Rinigus
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,9 +52,17 @@ Item {
         MenuButton { id: menuButton }
         Meters { id: meters }
         NavigationBlock { id: navigationBlock }
+        NavigationBlockLandscapeLeftShield { id: navigationBlockLandscapeLeftShield }
+        NavigationInfoBlock { id: navigationInfoBlock }
+        NavigationInfoBlockLandscapeLeftShield { id: navigationInfoBlockLandscapeLeftShield }
+        NavigationInfoBlockLandscapeRightShield { id: navigationInfoBlockLandscapeRightShield }
+        NavigationSign { id: navigationSign }
         NorthArrow { id: northArrow }
         Notification { id: notification }
         ScaleBar { id: scaleBar }
+        SpeedLimit { id: speedLimit }
+        StreetName { id: streetName }
+        Styler { id: styler }
 
         Component.onCompleted: {
             revolver.updateOrientation();
@@ -65,9 +73,13 @@ Item {
             app.menuButton = menuButton;
             app.meters = meters;
             app.navigationBlock = navigationBlock;
+            app.navigationInfoBlock = navigationInfoBlock;
+            app.navigationSign = navigationSign;
             app.northArrow = northArrow;
             app.notification = notification;
             app.scaleBar = scaleBar;
+            app.streetName = streetName;
+            app.styler = styler;
         }
 
         function updateOrientation() {

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Osmo Salomaa
+# Copyright (C) 2014 Osmo Salomaa, 2018 Rinigus
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,6 +50,10 @@ class Application:
                     if item["text"] not in (x["text"] for x in items):
                         items.append(item)
         return items
+
+    def has_mapmatching(self):
+        """Return True if map matching requirements are met"""
+        return poor.util.requirement_found("harbour-osmscout-server")
 
     def quit(self):
         """Quit the application."""

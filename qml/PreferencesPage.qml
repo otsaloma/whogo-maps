@@ -1,6 +1,6 @@
 /* -*- coding: utf-8-unix -*-
  *
- * Copyright (C) 2014 Osmo Salomaa
+ * Copyright (C) 2014 Osmo Salomaa, 2018 Rinigus
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ Page {
                 width: parent.width
                 onValueChanged: {
                     app.conf.set("map_scale", scaleSlider.value);
-                    map.setScale(scaleSlider.value);
+                    !app.navigationActive && map.setScale(scaleSlider.value);
                 }
             }
 
@@ -83,7 +83,7 @@ Page {
 
             ComboBox {
                 id: sleepComboBox
-                description: app.tr("Only applies when WhoGo Maps is active. When minimized, sleep is controlled by normal device-level preferences.")
+                description: app.tr("Only applies when Pure Maps is active. When minimized, sleep is controlled by normal device-level preferences.")
                 label: app.tr("Prevent sleep")
                 menu: ContextMenu {
                     MenuItem { text: app.tr("Never") }
@@ -99,6 +99,29 @@ Page {
                     var index = sleepComboBox.currentIndex;
                     app.conf.set("keep_alive", sleepComboBox.values[index]);
                     app.updateKeepAlive();
+                }
+            }
+
+            ComboBox {
+                id: mapmatchingComboBox
+                description: app.tr("Select mode of transportation. Only applies when Pure Maps is not navigating.")
+                label: app.tr("Snap position to road")
+                menu: ContextMenu {
+                    MenuItem { text: app.tr("None") }
+                    MenuItem { text: app.tr("Car") }
+                    MenuItem { text: app.tr("Bicycle") }
+                    MenuItem { text: app.tr("Foot") }
+                }
+                visible: app.hasMapMatching
+                property var values: ["none", "car", "bicycle", "foot"]
+                Component.onCompleted: {
+                    var value = app.conf.get("map_matching_when_idle");
+                    mapmatchingComboBox.currentIndex = mapmatchingComboBox.values.indexOf(value);
+                }
+                onCurrentIndexChanged: {
+                    var index = mapmatchingComboBox.currentIndex;
+                    app.conf.set("map_matching_when_idle", mapmatchingComboBox.values[index]);
+                    app.updateMapMatching();
                 }
             }
 

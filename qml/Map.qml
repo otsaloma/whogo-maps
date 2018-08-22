@@ -1,6 +1,6 @@
 /* -*- coding: utf-8-unix -*-
  *
- * Copyright (C) 2014 Osmo Salomaa
+ * Copyright (C) 2014 Osmo Salomaa, 2018 Rinigus
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,12 +35,19 @@ MapboxMap {
     zoomLevel: 4.0
 
     // Token for Mapbox.com-hosted maps, i.e. sources with mapbox:// URLs.
-    accessToken: "pk.eyJ1Ijoib3RzYWxvbWEiLCJhIjoiY2pidTlwMTdhMW9kNzJ4cGMycTh4c216eSJ9._KFWLhzdsKnkTeYwbEHzhg"
+    accessToken: "pk.eyJ1IjoicmluaWd1cyIsImEiOiJjamwyM3E2anIxaGZjM3FwMmlpNDR1ZnIyIn0.Hx8xydn4fRyXehvmjfZcog"
 
     property bool   autoCenter: false
     property bool   autoRotate: false
     property int    counter: 0
-    property var    direction: app.navigationStatus.direction || gps.direction
+    property var    direction: {
+        // prefer map matched direction, if available
+        if (gps.directionValid) return gps.direction;
+        if (app.navigationStatus.direction!==undefined && app.navigationStatus.direction!==null)
+            return app.navigationStatus.direction;
+        if (gps.directionCalculated) return gps.direction;
+        return undefined;
+    }
     property string firstLabelLayer: ""
     property string format: ""
     property bool   hasRoute: false
@@ -52,21 +59,21 @@ MapboxMap {
     property bool   tiltEnabled: false
 
     readonly property var images: QtObject {
-        readonly property string pixel: "whogo-image-pixel"
+        readonly property string pixel: "pure-image-pixel"
     }
 
     readonly property var layers: QtObject {
-        readonly property string dummies:   "whogo-layer-dummies"
-        readonly property string maneuvers: "whogo-layer-maneuvers-active"
-        readonly property string nodes:     "whogo-layer-maneuvers-passive"
-        readonly property string pois:      "whogo-layer-pois"
-        readonly property string route:     "whogo-layer-route"
+        readonly property string dummies:   "pure-layer-dummies"
+        readonly property string maneuvers: "pure-layer-maneuvers-active"
+        readonly property string nodes:     "pure-layer-maneuvers-passive"
+        readonly property string pois:      "pure-layer-pois"
+        readonly property string route:     "pure-layer-route"
     }
 
     readonly property var sources: QtObject {
-        readonly property string maneuvers: "whogo-source-maneuvers"
-        readonly property string pois:      "whogo-source-pois"
-        readonly property string route:     "whogo-source-route"
+        readonly property string maneuvers: "pure-source-maneuvers"
+        readonly property string pois:      "pure-source-pois"
+        readonly property string route:     "pure-source-route"
     }
 
     Behavior on bearing {
@@ -79,7 +86,7 @@ MapboxMap {
 
     Behavior on center {
         CoordinateAnimation {
-            duration: map.ready ? 500 : 0
+            duration: map.ready && !app.navigationActive ? 500 : 0
             easing.type: Easing.InOutQuad
         }
     }
@@ -109,12 +116,27 @@ MapboxMap {
     PositionMarker { id: positionMarker }
 
     Connections {
+        target: app
+        onPortraitChanged: map.updateMargins();
+    }
+
+    Connections {
         target: app.menuButton
         onYChanged: map.updateMargins();
     }
 
     Connections {
         target: app.navigationBlock
+        onHeightChanged: map.updateMargins();
+    }
+
+    Connections {
+        target: app.navigationInfoBlock
+        onHeightChanged: map.updateMargins();
+    }
+
+    Connections {
+        target: app.streetName
         onHeightChanged: map.updateMargins();
     }
 
@@ -157,6 +179,8 @@ MapboxMap {
             "name": maneuver.passive ? "passive" : "active",
             "narrative": maneuver.narrative || "",
             "passive": maneuver.passive || false,
+            "sign": maneuver.sign || undefined,
+            "street": maneuver.street|| undefined,
             "verbal_alert": maneuver.verbal_alert || "",
             "verbal_post": maneuver.verbal_post || "",
             "verbal_pre": maneuver.verbal_pre || "",
@@ -202,6 +226,8 @@ MapboxMap {
             "language": route.language || "en",
             "mode": route.mode || "car",
             "provider": route.provider || "",
+            "x": route.x,
+            "y": route.y
         };
         py.call("poor.app.narrative.set_mode", [route.mode || "car"], null);
         py.call("poor.app.narrative.set_route", [route.x, route.y], function() {
@@ -215,7 +241,10 @@ MapboxMap {
 
     function beginNavigating() {
         // Set UI to navigation mode.
-        map.zoomLevel < 15 && map.setZoomLevel(15);
+        var scale = app.conf.get("map_scale_navigation_" + route.mode);
+        var zoom = 15 - (scale > 1 ? Math.log(scale)*Math.LOG2E : 0);
+        map.setScale(scale);
+        map.zoomLevel < zoom && map.setZoomLevel(zoom);
         map.centerOnPosition();
         map.autoCenter = true;
         map.autoRotate = true;
@@ -268,28 +297,28 @@ MapboxMap {
         // Configure layer for POI markers.
         map.setPaintProperty(map.layers.pois, "circle-opacity", 0);
         map.setPaintProperty(map.layers.pois, "circle-radius", 32 / map.pixelRatio);
-        map.setPaintProperty(map.layers.pois, "circle-stroke-color", "#0540ff");
-        map.setPaintProperty(map.layers.pois, "circle-stroke-opacity", 0.5);
+        map.setPaintProperty(map.layers.pois, "circle-stroke-color", app.styler.route);
+        map.setPaintProperty(map.layers.pois, "circle-stroke-opacity", app.styler.routeOpacity);
         map.setPaintProperty(map.layers.pois, "circle-stroke-width", 13 / map.pixelRatio);
         // Configure layer for route polyline.
         map.setLayoutProperty(map.layers.route, "line-cap", "round");
         map.setLayoutProperty(map.layers.route, "line-join", "round");
-        map.setPaintProperty(map.layers.route, "line-color", "#0540ff");
-        map.setPaintProperty(map.layers.route, "line-opacity", 0.5);
+        map.setPaintProperty(map.layers.route, "line-color", app.styler.route);
+        map.setPaintProperty(map.layers.route, "line-opacity", app.styler.routeOpacity);
         map.setPaintProperty(map.layers.route, "line-width", 22 / map.pixelRatio);
         // Configure layer for active maneuver markers.
-        map.setPaintProperty(map.layers.maneuvers, "circle-color", "white");
+        map.setPaintProperty(map.layers.maneuvers, "circle-color", app.styler.maneuver);
         map.setPaintProperty(map.layers.maneuvers, "circle-pitch-alignment", "map");
         map.setPaintProperty(map.layers.maneuvers, "circle-radius", 11 / map.pixelRatio);
-        map.setPaintProperty(map.layers.maneuvers, "circle-stroke-color", "#0540ff");
-        map.setPaintProperty(map.layers.maneuvers, "circle-stroke-opacity", 0.5);
+        map.setPaintProperty(map.layers.maneuvers, "circle-stroke-color", app.styler.route);
+        map.setPaintProperty(map.layers.maneuvers, "circle-stroke-opacity", app.styler.routeOpacity);
         map.setPaintProperty(map.layers.maneuvers, "circle-stroke-width", 8 / map.pixelRatio);
         // Configure layer for passive maneuver markers.
-        map.setPaintProperty(map.layers.nodes, "circle-color", "white");
+        map.setPaintProperty(map.layers.nodes, "circle-color", app.styler.maneuver);
         map.setPaintProperty(map.layers.nodes, "circle-pitch-alignment", "map");
         map.setPaintProperty(map.layers.nodes, "circle-radius", 5 / map.pixelRatio);
-        map.setPaintProperty(map.layers.nodes, "circle-stroke-color", "#0540ff");
-        map.setPaintProperty(map.layers.nodes, "circle-stroke-opacity", 0.5);
+        map.setPaintProperty(map.layers.nodes, "circle-stroke-color", app.styler.route);
+        map.setPaintProperty(map.layers.nodes, "circle-stroke-opacity", app.styler.routeOpacity);
         map.setPaintProperty(map.layers.nodes, "circle-stroke-width", 8 / map.pixelRatio);
         // Configure layer for dummy symbols that knock out road shields etc.
         map.setLayoutProperty(map.layers.dummies, "icon-image", map.images.pixel);
@@ -304,6 +333,7 @@ MapboxMap {
         map.autoRotate = false;
         map.tiltEnabled = app.conf.get("tilt_when_navigating");
         map.zoomLevel > 14 && map.setZoomLevel(14);
+        map.setScale(app.conf.get("map_scale"));
         app.navigationActive = false;
     }
 
@@ -467,7 +497,10 @@ MapboxMap {
             (map.styleUrl  = py.evaluate("poor.app.basemap.style_url")) :
             (map.styleJson = py.evaluate("poor.app.basemap.style_json"));
         app.attributionButton.logo = py.evaluate("poor.app.basemap.logo");
+        app.styler.apply(py.evaluate("poor.app.basemap.style_gui"))
         map.initLayers();
+        map.configureLayers();
+        positionMarker.initIcons();
     }
 
     function setCenter(x, y) {
@@ -526,6 +559,10 @@ MapboxMap {
         // Calculate new margins and set them for the map.
         var header = app.navigationBlock ? app.navigationBlock.height : 0;
         var footer = app.menuButton ? app.menuButton.height : 0;
+        if (app.navigationActive) {
+            footer = app.portrait && app.navigationInfoBlock ? app.navigationInfoBlock.height : 0;
+            footer += app.streetName ? app.streetName.height : 0
+        }
         // If auto-rotate is on, the user is always heading up
         // on the screen and should see more ahead than behind.
         var marginY = map.autoRotate ? footer/map.height : 0.05;

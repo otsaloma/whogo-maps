@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2015 Osmo Salomaa
+# Copyright (C) 2015 Osmo Salomaa, 2018 Rinigus
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -91,6 +91,12 @@ ICONS_OSMSCOUT = {
     "turn-slight-right": "turn-slight-right",
 }
 
+MODE = {
+    "auto": "car",
+    "bicycle": "bicycle",
+    "pedestrian": "foot"
+}
+
 URL = "http://localhost:8553/v2/route?json={input}"
 cache = {}
 
@@ -119,11 +125,12 @@ def route(fm, to, heading, params):
         return copy.deepcopy(cache[url])
     result = poor.http.get_json(url)
     result = poor.AttrDict(result)
+    mode = MODE.get(poor.conf.routers.osmscout.type,"car")
     if result.get("API version", "") == "libosmscout V1":
-        return parse_result_libosmscout(url, result)
-    return parse_result_valhalla(url, result)
+        return parse_result_libosmscout(url, result, mode)
+    return parse_result_valhalla(url, result, mode)
 
-def parse_result_libosmscout(url, result):
+def parse_result_libosmscout(url, result, mode):
     """Parse and return route from libosmscout engine."""
     x, y = result.lng, result.lat
     maneuvers = [dict(
@@ -134,13 +141,19 @@ def parse_result_libosmscout(url, result):
         duration=float(maneuver.time),
         length=float(maneuver.length),
     ) for maneuver in result.maneuvers]
-    route = dict(x=x, y=y, maneuvers=maneuvers)
+    route = dict(x=x, y=y, maneuvers=maneuvers, mode=mode)
     route["language"] = result.language
     if route and route["x"]:
         cache[url] = copy.deepcopy(route)
     return route
 
-def parse_result_valhalla(url, result):
+def parse_exit(maneuver, key):
+    if "sign" not in maneuver or key not in maneuver["sign"]:
+        return None
+    e = maneuver["sign"][key]
+    return [i.get("text", "") for i in e]
+
+def parse_result_valhalla(url, result, mode):
     """Parse and return route from Valhalla engine."""
     legs = result.trip.legs[0]
     x, y = poor.util.decode_epl(legs.shape, precision=6)
@@ -149,12 +162,19 @@ def parse_result_valhalla(url, result):
         y=float(y[maneuver.begin_shape_index]),
         icon=ICONS.get(maneuver.type, "flag"),
         narrative=maneuver.instruction,
+        sign=dict(
+            exit_branch=parse_exit(maneuver, "exit_branch_elements"),
+            exit_name=parse_exit(maneuver, "exit_name_elements"),
+            exit_number=parse_exit(maneuver, "exit_number_elements"),
+            exit_toward=parse_exit(maneuver, "exit_toward_elements")
+        ),
+        street=maneuver.get("begin_street_names", maneuver.get("street_names", None)),
         verbal_alert=maneuver.get("verbal_transition_alert_instruction", None),
         verbal_pre=maneuver.get("verbal_pre_transition_instruction", None),
         verbal_post=maneuver.get("verbal_post_transition_instruction", None),
         duration=float(maneuver.time),
     ) for maneuver in legs.maneuvers]
-    route = dict(x=x, y=y, maneuvers=maneuvers, mode="car")
+    route = dict(x=x, y=y, maneuvers=maneuvers, mode=mode)
     route["language"] = result.trip.language
     if route and route["x"]:
         cache[url] = copy.deepcopy(route)

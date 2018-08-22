@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Copyright (C) 2014 Osmo Salomaa
+# Copyright (C) 2014 Osmo Salomaa, 2018 Rinigus
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,11 @@
 """Narration of routing maneuvers."""
 
 import bisect
+import datetime
 import poor
 import statistics
 
-from poor.i18n import __
+from poor.i18n import _, __
 
 __all__ = ("Narrative",)
 
@@ -37,6 +38,8 @@ class Maneuver:
         self.length = 0
         self.narrative = ""
         self.node = None
+        self.sign = None
+        self.street = None
         self.verbal_alert = ""
         self.verbal_post = ""
         self.verbal_pre = ""
@@ -202,9 +205,21 @@ class Narrative:
             x, y, node, seg_dist)
         progress  = (max(self.time) - dest_time) / max(self.time)
         dest_dist = poor.util.format_distance(dest_dist)
+        dest_eta = (datetime.datetime.now()+datetime.timedelta(seconds=dest_time)).strftime("%H:%M")
         dest_time = poor.util.format_time(dest_time)
         man = self._get_display_maneuver(x, y, node, seg_dists)
-        man_node, man_dist, man_time, icon, narrative = man
+        man_node, man_dist, man_time, icon, narrative, sign, street = man
+        if (street is None or len(street)==0) and sign is not None:
+            if "exit_toward" in sign and sign["exit_toward"] is not None and len(sign["exit_toward"]) > 0:
+                street = ["⇨ " + ("; ".join(sign["exit_toward"]))]
+            elif "exit_branch"  in sign and sign["exit_branch"] is not None and len(sign["exit_branch"]) > 0:
+                street = ["⇨ " + ("; ".join(sign["exit_branch"]))]
+            elif "exit_number"  in sign and sign["exit_number"] is not None and len(sign["exit_number"]) > 0:
+                street = [_("Exit: ") + ("; ".join(sign["exit_number"]))]
+            elif "exit_name"  in sign and sign["exit_name"] is not None and len(sign["exit_name"]) > 0:
+                street = [_("Exit: ") + ("; ".join(sign["exit_name"]))]
+        sign = (
+            sign if seg_dist < 100 and navigating and (man_dist < 500 or man_time < 300) else None)
         voice_uri = (
             self._get_voice_uri(man_node, man_dist, man_time)
             if seg_dist < 100 and navigating else None)
@@ -213,7 +228,7 @@ class Narrative:
         if seg_dist > 100:
             # Don't show the narrative or details calculated
             # from nodes along the route if far off route.
-            dest_time = man_time = icon = narrative = None
+            dest_time = man_time = icon = narrative = sign = street = None
         # Don't provide route direction to auto-rotate by if off route.
         direction = self._get_direction(x, y, node) if seg_dist < 50 else None
         # Trigger rerouting if off route (usually after missed a turn).
@@ -221,6 +236,7 @@ class Narrative:
         return dict(total_dist=poor.util.format_distance(max(self.dist)),
                     total_time=poor.util.format_time(max(self.time)),
                     dest_dist=dest_dist,
+                    dest_eta=dest_eta,
                     dest_time=dest_time,
                     man_dist=man_dist,
                     man_time=man_time,
@@ -229,7 +245,9 @@ class Narrative:
                     narrative=narrative,
                     direction=direction,
                     voice_uri=voice_uri,
-                    reroute=reroute)
+                    reroute=reroute,
+                    sign=sign,
+                    street=street)
 
     def _get_display_destination(self, x, y, node, seg_dist):
         """Return destination details to display."""
@@ -261,7 +279,7 @@ class Narrative:
             # Use exact straight-line value at the very end.
             man_dist = poor.util.calculate_distance(
                 x, y, maneuver.x, maneuver.y)
-        return man_node, man_dist, man_time, maneuver.icon, maneuver.narrative
+        return man_node, man_dist, man_time, maneuver.icon, maneuver.narrative, maneuver.sign, maneuver.street
 
     def _get_display_transit(self, x, y):
         """Return a dictionary of status details to display."""
@@ -274,6 +292,7 @@ class Narrative:
             x, y, node, seg_dist)
         progress  = (max(self.time) - dest_time) / max(self.time)
         dest_dist = poor.util.format_distance(dest_dist)
+        dest_eta = (datetime.datetime.now()+datetime.timedelta(seconds=dest_time)).strftime("%H:%M")
         dest_time = poor.util.format_time(dest_time)
         man_node  = self._get_closest_maneuver_node(x, y, node)
         if man_node > node + 1:
@@ -306,6 +325,7 @@ class Narrative:
         return dict(total_dist=poor.util.format_distance(max(self.dist)),
                     total_time=poor.util.format_time(max(self.time)),
                     dest_dist=dest_dist,
+                    dest_eta=dest_eta,
                     dest_time=dest_time,
                     man_dist=man_dist,
                     man_time=man_time,
@@ -314,7 +334,9 @@ class Narrative:
                     narrative=narrative,
                     direction=direction,
                     voice_uri=None,
-                    reroute=False)
+                    reroute=False,
+                    sign=None,
+                    street=None)
 
     def _get_distance_from_route(self, x, y, node):
         """Return distance in meters from the route polyline."""
@@ -349,6 +371,8 @@ class Narrative:
             icon=maneuver.icon,
             length=poor.util.format_distance(maneuver.length),
             narrative=maneuver.narrative,
+            sign=maneuver.sign,
+            street=maneuver.street,
             verbal_alert=maneuver.verbal_alert,
             verbal_post=maneuver.verbal_post,
             verbal_pre=maneuver.verbal_pre,

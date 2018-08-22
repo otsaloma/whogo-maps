@@ -1,6 +1,6 @@
 /* -*- coding: utf-8-unix -*-
  *
- * Copyright (C) 2017 Osmo Salomaa
+ * Copyright (C) 2017 Osmo Salomaa, 2018 Rinigus
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,9 @@ QtObject {
     id: status
 
     property string destDist:  ""
+    property string destEta:  ""
     property string destTime:  ""
-    property var    direction: null
+    property var    direction: undefined
     property string icon:      ""
     property string manDist:   ""
     property string manTime:   ""
@@ -31,6 +32,8 @@ QtObject {
     property bool   notify:    app.showNarrative && (icon || narrative)
     property real   progress:  0
     property bool   reroute:   false
+    property var    sign: undefined
+    property var    street: undefined
     property string totalDist: ""
     property string totalTime: ""
     property string voiceUri:  ""
@@ -39,13 +42,15 @@ QtObject {
         // Reset all navigation status properties.
         status.destDist  = "";
         status.destTime  = "";
-        status.direction = null;
+        status.direction = undefined;
         status.icon      = "";
         status.manDist   = "";
         status.manTime   = "";
         status.narrative = "";
         status.progress  = 0;
         status.reroute   = false;
+        status.sign      = undefined;
+        status.street    = undefined;
         status.totalDist = "";
         status.totalTime = "";
         status.voiceUri  = "";
@@ -55,14 +60,18 @@ QtObject {
         // Update navigation status with data from Python backend.
         if (!data) return;
         status.destDist  = data.dest_dist  || "";
+        status.destEta   = data.dest_eta   || "";
         status.destTime  = data.dest_time  || "";
-        status.direction = data.direction  || null;
+        if (data.direction !== undefined && data.direction !== null) status.direction = data.direction;
+        else status.direction = undefined;
         status.icon      = data.icon       || "";
         status.manDist   = data.man_dist   || "";
         status.manTime   = data.man_time   || "";
         status.narrative = data.narrative  || "";
         status.progress  = data.progress   || 0;
-        status.reroute   = data.reroute    || false
+        status.reroute   = data.reroute    || false;
+        status.sign      = data.sign       || undefined;
+        status.street    = data.street     || undefined;
         status.totalDist = data.total_dist || "";
         status.totalTime = data.total_time || "";
         status.voiceUri  = data.voice_uri  || "";

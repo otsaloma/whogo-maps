@@ -1,6 +1,6 @@
 /* -*- coding: utf-8-unix -*-
  *
- * Copyright (C) 2014 Osmo Salomaa
+ * Copyright (C) 2014 Osmo Salomaa, 2018 Rinigus
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,17 +40,28 @@ ApplicationWindow {
     property var  attributionButton: null
     property var  centerButton: null
     property var  conf: Config {}
+    property bool hasMapMatching: false
     property var  map: null
+    property string mapMatchingMode: {
+        if (!hasMapMatching) return "none";
+        if (navigationActive) return mapMatchingModeNavigation;
+        return mapMatchingModeIdle;
+    }
+    property string mapMatchingModeIdle: "none"
+    property string mapMatchingModeNavigation: "none"
     property var  menuButton: null
     property var  meters: null
     property var  narrativePageSeen: false
     property bool navigationActive: false
     property var  navigationBlock: null
+    property var  navigationInfoBlock: null
     property var  navigationPageSeen: false
+    property var  navigationSign: null
     property var  navigationStatus: NavigationStatus {}
     property bool navigationStarted: false
     property var  northArrow: null
     property var  notification: null
+    property bool portrait: screenHeight >= screenWidth
     property int  rerouteConsecutiveErrors: 0
     property var  reroutePreviousTime: -1
     property int  rerouteTotalCalls: 0
@@ -60,6 +71,10 @@ ApplicationWindow {
     property int  screenHeight: Screen.height
     property int  screenWidth: Screen.width
     property var  showNarrative: null
+    property var  showNavigationSign: null
+    property var  showSpeedLimit: null
+    property var  styler: null
+    property var  streetName: null
 
     // Default vertical margin for various multiline list items
     // such that it would be consistent with single-line list items
@@ -75,6 +90,11 @@ ApplicationWindow {
         autoLoad: true
         autoPlay: true
         loops: 1
+    }
+
+    Component.onCompleted: {
+        updateMapMatching();
+        updateNavigationSettings();
     }
 
     Component.onDestruction: {
@@ -108,7 +128,7 @@ ApplicationWindow {
         app.hideMenu();
     }
 
-    function getIcon(name) {
+    function getIcon(name, no_variant) {
         // Return path to icon suitable for user's screen,
         // finding the closest match to Theme.pixelRatio.
         var ratios = [1.00, 1.25, 1.50, 1.75, 2.00];
@@ -119,6 +139,7 @@ ApplicationWindow {
             minDiff = Math.min(minDiff, diff);
         }
         var ratio = ratios[minIndex].toFixed(2);
+        if (!no_variant && app.styler.iconVariant) return "%1-%2@%3.png".arg(name).arg(app.styler.iconVariant).arg(ratio);
         return "%1@%2.png".arg(name).arg(ratio);
     }
 
@@ -240,10 +261,25 @@ ApplicationWindow {
             (prevent === "always" || (prevent === "navigating" && app.navigationActive));
     }
 
-    function updateNavigationStatus(status) {
-        // Update navigation status with data from Python backend.
+    function updateMapMatching() {
+        if (!py.ready) return py.onReadyChanged.connect(app.updateMapMatching);
+        app.hasMapMatching = py.call_sync("poor.app.has_mapmatching", []);
+        app.mapMatchingModeIdle = app.conf.get("map_matching_when_idle");
+        // app.mapMatchingModeNavigation is set on Navigation page
+    }
+
+    function updateNavigationSettings() {
+        if (!py.ready) return py.onReadyChanged.connect(app.updateNavigationSettings);
         if (app.showNarrative === null)
             app.showNarrative = app.conf.get("show_narrative");
+        if (app.showNavigationSign === null)
+            app.showNavigationSign = app.conf.get("show_navigation_sign");
+        if (app.showSpeedLimit === null)
+            app.showSpeedLimit = app.conf.get("show_speed_limit");
+    }
+
+    function updateNavigationStatus(status) {
+        // Update navigation status with data from Python backend.
         app.navigationStatus.update(status);
         if (app.navigationStatus.voiceUri && app.conf.get("voice_navigation"))
             sound.source = app.navigationStatus.voiceUri;

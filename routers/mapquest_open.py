@@ -53,6 +53,12 @@ ICONS = {
     18: "fork-straight",
 }
 
+MODE = {
+    "fastest": "car",
+    "bicycle": "bicycle",
+    "pedestrian": "foot"
+}
+
 SUPPORTED_LOCALES = [
     "en_US",
     "en_GB",
@@ -65,7 +71,7 @@ SUPPORTED_LOCALES = [
 ]
 
 URL = ("http://open.mapquestapi.com/directions/v2/route"
-       "?key=Fmjtd|luur2quy2h,bn=o5-9aasg4"
+       "?key=2aHt8JcDObJZhGHZ9EPv99F1N5JNp1RI"
        "&ambiguities=ignore"
        "&from={fm}"
        "&to={to}"
@@ -116,7 +122,8 @@ def route(fm, to, heading, params):
     if len(maneuvers) > 1:
         maneuvers[ 0]["icon"] = "depart"
         maneuvers[-1]["icon"] = "arrive"
-    route = dict(x=x, y=y, maneuvers=maneuvers, mode="car")
+    mode = MODE.get(type,"car")
+    route = dict(x=x, y=y, maneuvers=maneuvers, mode=mode)
     route["language"] = locale
     if route and route["x"]:
         cache[url] = copy.deepcopy(route)

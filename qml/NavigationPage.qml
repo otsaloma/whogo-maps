@@ -1,6 +1,6 @@
 /* -*- coding: utf-8-unix -*-
  *
- * Copyright (C) 2017 Osmo Salomaa
+ * Copyright (C) 2017 Osmo Salomaa, 2018 Rinigus
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -221,6 +221,72 @@ Page {
                 onCheckedChanged: {
                     if (!rerouteSwitch.enabled) return;
                     app.conf.set("reroute", rerouteSwitch.checked);
+                }
+            }
+
+            TextSwitch {
+                id: mapmatchingSwitch
+                checked: enabled && app.conf.get("map_matching_when_navigating")
+                enabled: map.route.mode !== "transit"
+                text: app.tr("Snap position to road")
+                visible: app.hasMapMatching
+                onCheckedChanged: {
+                    if (!mapmatchingSwitch.enabled) return;
+                    app.conf.set("map_matching_when_navigating", mapmatchingSwitch.checked);
+                    if (mapmatchingSwitch.checked) app.mapMatchingModeNavigation=map.route.mode;
+                    else app.mapMatchingModeNavigation="none";
+                }
+            }
+
+            Slider {
+                id: scaleSlider
+                label: app.tr("Map scale")
+                maximumValue: 4.0
+                minimumValue: 0.5
+                stepSize: 0.1
+                value: map.route.mode != null ? app.conf.get("map_scale_navigation_" + map.route.mode) : 1
+                valueText: value
+                visible: map.route.mode != null
+                width: parent.width
+                onValueChanged: {
+                    if (map.route.mode == null) return;
+                    app.conf.set("map_scale_navigation_" + map.route.mode, scaleSlider.value);
+                    app.navigationActive && map.setScale(scaleSlider.value);
+                }
+            }
+
+            TextSwitch {
+                id: directionsSwitch
+                checked: app.conf.get("show_navigation_sign")
+                text: app.tr("Show direction signs")
+                onCheckedChanged: {
+                    app.conf.set("show_navigation_sign", directionsSwitch.checked);
+                    app.showNavigationSign = directionsSwitch.checked;
+                }
+            }
+
+            ComboBox {
+                id: speedLimitComboBox
+                description: app.tr("Show speed limit sign")
+                label: app.tr("Speed limit")
+                menu: ContextMenu {
+                    MenuItem { text: app.tr("Always") }
+                    MenuItem { text: app.tr("Only when exceeding") }
+                    MenuItem { text: app.tr("Never") }
+                }
+
+                property var values: ["always", "exceeding", "never"]
+
+                Component.onCompleted: {
+                    var value = app.conf.get("show_speed_limit");
+                    speedLimitComboBox.currentIndex = speedLimitComboBox.values.indexOf(value);
+                }
+
+                onCurrentIndexChanged: {
+                    var index = speedLimitComboBox.currentIndex;
+                    var v = speedLimitComboBox.values[index];
+                    app.conf.set("show_speed_limit", v);
+                    app.showSpeedLimit = v;
                 }
             }
 

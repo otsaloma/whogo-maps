@@ -1,6 +1,6 @@
 /* -*- coding: utf-8-unix -*-
  *
- * Copyright (C) 2014 Osmo Salomaa
+ * Copyright (C) 2014 Osmo Salomaa, 2018 Rinigus
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ import Sailfish.Silica 1.0
 import "."
 
 IconButton {
+    id: master
     anchors.bottom: parent.bottom
     anchors.right: parent.right
     height: icon.height
@@ -29,6 +30,24 @@ IconButton {
     icon.smooth: true
     icon.source: app.getIcon("icons/north")
     icon.width: icon.sourceSize.width
+    states: [
+        State {
+            when: app.navigationActive && !app.portrait
+            AnchorChanges {
+                target: master
+                anchors.bottom: undefined
+                anchors.top: app.navigationSign.bottom
+            }
+        },
+        State {
+            when: app.navigationActive
+            AnchorChanges {
+                target: master
+                anchors.bottom: undefined
+                anchors.top: centerButton.bottom
+            }
+        }
+    ]
     width: icon.width
     z: 500
 
@@ -36,7 +55,7 @@ IconButton {
         id: bubble
         anchorItem: parent
         showArrow: false
-        state: "top-left"
+        state: app.navigationActive ? "bottom-left" : "top-left"
         visible: false
     }
 
